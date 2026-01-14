@@ -95,7 +95,7 @@ app.get('/api/products/search', async (req, res) => {
 // Route pour créer un produit
 app.post('/api/products', async (req, res) => {
   try {
-    const { name, price, description, categoryId, isDispo = true } = req.body;
+    const { id, name, price, description, categoryId, isDispo = true, imgUrl, isPopular = false } = req.body;
     
     // Validation simple
     if (!name || !price || !categoryId) {
@@ -104,15 +104,24 @@ app.post('/api/products', async (req, res) => {
       });
     }
     
+    // Importer crypto si pas déjà fait
+    const crypto = require('crypto');
+    
+    // Générer un UUID si l'ID n'est pas fourni
+    const productId = id || crypto.randomUUID();
+    
     const { data, error } = await supabase
       .from('products')
       .insert([
         { 
+          id: productId,
           name, 
           price, 
           description, 
           categoryId, 
           isDispo,
+          imgUrl,
+          isPopular,
           created_at: new Date()
         }
       ])
@@ -123,38 +132,6 @@ app.post('/api/products', async (req, res) => {
     res.status(201).json(data[0]);
   } catch (error) {
     console.error('Erreur création produit:', error.message);
-    res.status(500).json({ message: 'Erreur serveur', details: error.message });
-  }
-});
-
-// Route pour modifier un produit
-app.put('/api/products/:id', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { name, price, description, categoryId, isDispo } = req.body;
-    
-    const updates = {};
-    if (name !== undefined) updates.name = name;
-    if (price !== undefined) updates.price = price;
-    if (description !== undefined) updates.description = description;
-    if (categoryId !== undefined) updates.categoryId = categoryId;
-    if (isDispo !== undefined) updates.isDispo = isDispo;
-    
-    const { data, error } = await supabase
-      .from('products')
-      .update(updates)
-      .eq('id', id)
-      .select();
-    
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      return res.status(404).json({ message: 'Produit non trouvé' });
-    }
-    
-    res.json(data[0]);
-  } catch (error) {
-    console.error('Erreur mise à jour produit:', error.message);
     res.status(500).json({ message: 'Erreur serveur', details: error.message });
   }
 });
