@@ -48,7 +48,7 @@ const verifySupabaseToken = async (req, res, next) => {
     const profiles = await profileRes.json()
     const role = profiles?.[0]?.role
 
-    if (role !== 'admin') {
+    if (role !== 'admin' && role !== 'super_admin') {
       return res.status(403).json({ status: 'error', message: 'Accès refusé. Droits admin requis' })
     }
 
